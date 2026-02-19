@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -66,7 +66,9 @@ export function ChatLayout() {
           </div>
           <ThemeToggle />
         </div>
-        <ChatInterface />
+        <Suspense fallback={<div className="flex flex-1 items-center justify-center bg-background" />}>
+          <ChatInterface />
+        </Suspense>
       </div>
     </div>
   )

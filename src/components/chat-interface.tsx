@@ -1,7 +1,9 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Send, Bot, User, Sparkles } from "lucide-react"
+import { useSearchParams, useRouter } from "next/navigation"
+import { Send, Bot, User, Sparkles, Plus } from "lucide-react"
+import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -38,10 +40,29 @@ const SAMPLE_MESSAGES: Message[] = [
 ]
 
 export function ChatInterface() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const conversationId = searchParams.get("id")
+
   const [messages, setMessages] = useState<Message[]>(SAMPLE_MESSAGES)
   const [input, setInput] = useState("")
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const handleStartNewChat = async () => {
+    try {
+      const res = await fetch("/api/conversations", { method: "POST" })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error("대화 생성에 실패했습니다.")
+        return
+      }
+      const id = data?.id
+      if (id) router.push(`/?id=${id}`)
+    } catch {
+      toast.error("대화 생성에 실패했습니다.")
+    }
+  }
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -92,6 +113,41 @@ export function ChatInterface() {
     }
   }
 
+  // id 쿼리가 없으면 빈 상태(안내 메시지 + 새 대화 버튼) 렌더링
+  if (!conversationId) {
+    return (
+      <div className="flex h-full flex-1 flex-col bg-background">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-6">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-4 text-primary" />
+            <h1 className="text-sm font-semibold text-foreground">
+              React Server Components
+            </h1>
+          </div>
+          <div className="hidden md:block">
+            <ThemeToggle />
+          </div>
+        </header>
+        <section
+          aria-label="대화 선택 안내"
+          className="flex flex-1 flex-col items-center justify-center gap-6 px-6"
+        >
+          <p className="text-center text-muted-foreground">
+            새로운 대화를 시작하거나 기존 대화를 선택해주세요
+          </p>
+          <Button
+            onClick={handleStartNewChat}
+            className="gap-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            <Plus className="size-4" />
+            새 대화 시작하기
+          </Button>
+        </section>
+      </div>
+    )
+  }
+
+  // id가 있으면 기존 채팅 화면 렌더링
   return (
     <div className="flex h-full flex-1 flex-col bg-background">
       {/* ── Header ── */}
