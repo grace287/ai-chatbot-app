@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
+import { useChat } from "@ai-sdk/react"
 import { Send, Bot, User, Sparkles, Plus } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -19,31 +20,81 @@ export function ChatInterface() {
   const router = useRouter()
   const idFromUrl = searchParams.get("id")
   const [conversationId, setConversationId] = useState<string | null>(idFromUrl)
+  const conversationIdRef = useRef<string | null>(conversationId)
 
   useEffect(() => {
     setConversationId(idFromUrl)
   }, [idFromUrl])
 
-  const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState("")
+  useEffect(() => {
+    conversationIdRef.current = conversationId
+  }, [conversationId])
+
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
+  const {
+    messages: chatMessages,
+    append,
+    setMessages: setChatMessages,
+    status: chatStatus,
+  } = useChat({
+    api: "/api/chat",
+    id: conversationId ?? undefined,
+    onFinish: async (message) => {
+      const currentId = conversationIdRef.current
+      if (!currentId) return
+
+      const content =
+        (message.parts ?? [])
+          .filter((p): p is { type: "text"; text: string } => p.type === "text")
+          .map((p) => p.text)
+          .join("")
+          .trim() || (typeof message.content === "string" ? message.content.trim() : "")
+
+      if (!content) return
+
+      try {
+        const res = await fetch(
+          `/api/conversations/${currentId}/messages`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ role: "assistant", content }),
+          }
+        )
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}))
+          toast.error(data?.error ?? "AI 응답 저장에 실패했습니다.")
+        }
+      } catch {
+        toast.error("AI 응답 저장에 실패했습니다.")
+      }
+    },
+  })
+
+  const [input, setInput] = useState("")
+
   useEffect(() => {
     if (!conversationId) {
-      setMessages([])
+      setChatMessages([])
       return
     }
     fetch(`/api/conversations/${conversationId}/messages`)
       .then((res) => res.json())
       .then((data: Message[] | { error?: string }) => {
         if (Array.isArray(data)) {
-          setMessages(data.map((m) => ({ id: m.id, role: m.role, content: m.content })))
+          const list = data.map((m) => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+          }))
+          setChatMessages(list)
         } else {
-          setMessages([])
+          setChatMessages([])
         }
       })
-      .catch(() => setMessages([]))
+      .catch(() => setChatMessages([]))
   }, [conversationId])
 
   const handleStartNewChat = async () => {
@@ -64,11 +115,25 @@ export function ChatInterface() {
     }
   }
 
+  const displayMessages: Message[] = chatMessages.map((m) => {
+    const fromParts = (m.parts ?? [])
+      .filter((p): p is { type: "text"; text: string } => p.type === "text")
+      .map((p) => p.text)
+      .join("")
+    return {
+      id: m.id,
+      role: (m.role === "user" || m.role === "assistant" || m.role === "system"
+        ? m.role
+        : "assistant") as Message["role"],
+      content: fromParts || (typeof m.content === "string" ? m.content : ""),
+    }
+  })
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [messages])
+  }, [chatMessages])
 
 
   const sendMessageHandler = async (e: React.FormEvent) => {
@@ -76,12 +141,6 @@ export function ChatInterface() {
     const content = input.trim()
     if (!content || !conversationId) return
 
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content,
-    }
-    setMessages((prev) => [...prev, userMsg])
     setInput("")
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto"
@@ -96,25 +155,12 @@ export function ChatInterface() {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         toast.error(data?.error ?? "메시지 저장에 실패했습니다.")
-        setMessages((prev) => prev.filter((m) => m.id !== userMsg.id))
         return
       }
+      append({ role: "user", content })
     } catch {
       toast.error("메시지 저장에 실패했습니다.")
-      setMessages((prev) => prev.filter((m) => m.id !== userMsg.id))
-      return
     }
-
-    // TODO: sendMessage(useChat) 또는 AI 스트리밍 연동
-    setTimeout(() => {
-      const aiMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content:
-          "질문해 주셔서 감사합니다! 요청을 처리하고 있습니다. 실제 구현에서는 AI 스트리밍과 연동됩니다.",
-      }
-      setMessages((prev) => [...prev, aiMsg])
-    }, 1000)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -192,7 +238,7 @@ export function ChatInterface() {
         >
           <div className="mx-auto max-w-3xl px-4 py-6 md:px-6">
             <div className="flex flex-col gap-5">
-              {messages.map((msg) => (
+              {displayMessages.map((msg) => (
                 <MessageBubble key={msg.id} message={msg} />
               ))}
             </div>
@@ -223,7 +269,7 @@ export function ChatInterface() {
             <Button
               type="submit"
               size="icon"
-              disabled={!input.trim()}
+              disabled={!input.trim() || chatStatus === "submitted" || chatStatus === "streaming"}
               className="size-10 shrink-0 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 transition-opacity"
               aria-label="메시지 전송"
             >
