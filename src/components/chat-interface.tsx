@@ -10,44 +10,41 @@ import { ThemeToggle } from "@/components/theme-toggle"
 
 interface Message {
   id: string
-  role: "user" | "assistant"
+  role: "user" | "assistant" | "system"
   content: string
 }
-
-const SAMPLE_MESSAGES: Message[] = [
-  {
-    id: "1",
-    role: "user",
-    content: "React Server Components가 정확히 뭔가요? 쉽게 설명해줄 수 있어요?",
-  },
-  {
-    id: "2",
-    role: "assistant",
-    content:
-      "React Server Components(RSC)는 서버에서만 실행되는 새로운 유형의 컴포넌트입니다. 기존 React 컴포넌트와 다르게 브라우저가 아닌 서버에서 동작하며, 다음과 같은 장점이 있습니다:\n\n1. **백엔드 리소스에 직접 접근** - API 레이어 없이 데이터베이스, 파일 시스템에 바로 접근 가능\n2. **번들 사이즈 감소** - 서버 전용 코드는 클라이언트로 전송되지 않음\n3. **성능 향상** - 무거운 연산과 데이터 패칭이 서버에서 처리됨\n\n쉽게 비유하면, 기존 컴포넌트는 주방과 식당이 같은 공간에 있는 레스토랑이고, RSC는 주방을 별도 건물로 옮긴 것입니다. 손님(사용자)은 완성된 요리(HTML)만 보게 됩니다.",
-  },
-  {
-    id: "3",
-    role: "user",
-    content: "RSC와 SSR의 차이점은 뭔가요?",
-  },
-  {
-    id: "4",
-    role: "assistant",
-    content:
-      "좋은 질문입니다! 둘은 관련이 있지만 근본적으로 다릅니다:\n\n**SSR (Server-Side Rendering)**\n- 전체 컴포넌트 트리를 서버에서 HTML로 렌더링\n- 이후 클라이언트에서 \"하이드레이션\" 진행\n- 모든 컴포넌트 코드가 브라우저로 전송됨\n- 컴포넌트가 클라이언트에서 다시 실행됨\n\n**RSC (React Server Components)**\n- 컴포넌트가 서버에 영구적으로 존재\n- 코드가 아닌 렌더링 결과만 클라이언트로 전송\n- 서버 컴포넌트는 클라이언트 JavaScript가 제로\n- 인터랙티브한 클라이언트 컴포넌트와 결합 가능\n\n요약하면, SSR은 컴포넌트가 **언제** 렌더링되는지(서버 먼저, 그다음 클라이언트), RSC는 **어디서** 렌더링되는지(서버만, 클라이언트만, 또는 둘 다)에 관한 것입니다.",
-  },
-]
 
 export function ChatInterface() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const conversationId = searchParams.get("id")
+  const idFromUrl = searchParams.get("id")
+  const [conversationId, setConversationId] = useState<string | null>(idFromUrl)
 
-  const [messages, setMessages] = useState<Message[]>(SAMPLE_MESSAGES)
+  useEffect(() => {
+    setConversationId(idFromUrl)
+  }, [idFromUrl])
+
+  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (!conversationId) {
+      setMessages([])
+      return
+    }
+    fetch(`/api/conversations/${conversationId}/messages`)
+      .then((res) => res.json())
+      .then((data: Message[] | { error?: string }) => {
+        if (Array.isArray(data)) {
+          setMessages(data.map((m) => ({ id: m.id, role: m.role, content: m.content })))
+        } else {
+          setMessages([])
+        }
+      })
+      .catch(() => setMessages([]))
+  }, [conversationId])
 
   const handleStartNewChat = async () => {
     try {
@@ -73,30 +70,48 @@ export function ChatInterface() {
     }
   }, [messages])
 
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const sendMessageHandler = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim()) return
+    const content = input.trim()
+    if (!content || !conversationId) return
 
     const userMsg: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: input.trim(),
+      content,
     }
     setMessages((prev) => [...prev, userMsg])
     setInput("")
-
-    // Reset textarea height
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto"
     }
 
-    // Simulate AI response
+    try {
+      const res = await fetch(`/api/conversations/${conversationId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: "user", content }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        toast.error(data?.error ?? "메시지 저장에 실패했습니다.")
+        setMessages((prev) => prev.filter((m) => m.id !== userMsg.id))
+        return
+      }
+    } catch {
+      toast.error("메시지 저장에 실패했습니다.")
+      setMessages((prev) => prev.filter((m) => m.id !== userMsg.id))
+      return
+    }
+
+    // TODO: sendMessage(useChat) 또는 AI 스트리밍 연동
     setTimeout(() => {
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content:
-          "질문해 주셔서 감사합니다! 요청을 처리하고 있습니다. 이것은 채팅 레이아웃을 보여주기 위한 샘플 응답입니다. 실제 구현에서는 AI 모델에 연결되어 실제 응답을 생성하게 됩니다.",
+          "질문해 주셔서 감사합니다! 요청을 처리하고 있습니다. 실제 구현에서는 AI 스트리밍과 연동됩니다.",
       }
       setMessages((prev) => [...prev, aiMsg])
     }, 1000)
@@ -105,7 +120,7 @@ export function ChatInterface() {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
-      handleSubmit(e)
+      sendMessageHandler(e)
     }
   }
 
@@ -191,7 +206,7 @@ export function ChatInterface() {
         className="shrink-0 border-t border-border bg-card px-4 py-4"
       >
         <form
-          onSubmit={handleSubmit}
+          onSubmit={sendMessageHandler}
           className="mx-auto max-w-3xl"
         >
           <div className="flex items-end gap-3 rounded-2xl bg-secondary p-2 ring-1 ring-border focus-within:ring-2 focus-within:ring-ring transition-shadow">

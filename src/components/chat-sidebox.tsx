@@ -107,7 +107,10 @@ export function ChatSidebox({ className }: ChatSidebarProps) {
 
       const list = await fetchConversations()
       const newId = data?.id ?? list[0]?.id
-      if (newId) setActiveId(newId)
+      if (newId) {
+        setActiveId(newId)
+        router.push(`/?id=${newId}`)
+      }
     } catch {
       toast.error("대화 생성에 실패했습니다.")
     }

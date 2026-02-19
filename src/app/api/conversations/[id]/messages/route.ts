@@ -3,6 +3,57 @@ import { supabase } from "@/lib/supabase/client";
 
 const ALLOWED_ROLES = ["user", "assistant", "system"] as const;
 
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  if (!supabase) {
+    return NextResponse.json(
+      { error: "Supabase가 설정되지 않았습니다." },
+      { status: 503 }
+    );
+  }
+
+  const { id: conversationIdParam } = await params;
+  const conversationId = Number(conversationIdParam);
+  if (!Number.isInteger(conversationId) || conversationId < 1) {
+    return NextResponse.json(
+      { error: "유효하지 않은 대화 ID입니다." },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("messages")
+      .select("id, role, content, created_at")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("messages fetch error:", error);
+      return NextResponse.json(
+        { error: "메시지를 불러오지 못했습니다." },
+        { status: 500 }
+      );
+    }
+
+    const messages = (data ?? []).map((row) => ({
+      id: String(row.id),
+      role: row.role as "user" | "assistant" | "system",
+      content: row.content ?? "",
+    }));
+
+    return NextResponse.json(messages);
+  } catch (e) {
+    console.error("messages GET error:", e);
+    return NextResponse.json(
+      { error: "메시지를 불러오지 못했습니다." },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
