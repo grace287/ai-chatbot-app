@@ -2,17 +2,42 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { useChat } from "@ai-sdk/react"
+import { useChat, type Message } from "@ai-sdk/react"
 import { Send, Bot, User, Sparkles, Plus } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 
-interface Message {
+/** API 메시지 응답 형태 (GET /api/conversations/[id]/messages) */
+interface ApiMessage {
+  id: string
+  role: string
+  content: string
+}
+
+/** UI에 표시할 메시지 (id, role, content만 사용) */
+interface DisplayMessage {
   id: string
   role: "user" | "assistant" | "system"
   content: string
+}
+
+/** API 응답을 AI SDK Message[]로 변환 (setMessages는 Message[]를 받고, 내부적으로 UIMessage로 채움) */
+function apiMessagesToMessages(data: ApiMessage[]): Message[] {
+  const allowedRoles = ["user", "assistant", "system"] as const
+  return data.map((m) => {
+    const role = allowedRoles.includes(m.role as (typeof allowedRoles)[number])
+      ? (m.role as Message["role"])
+      : "assistant"
+    const content = m.content ?? ""
+    return {
+      id: m.id,
+      role,
+      content,
+      parts: [{ type: "text" as const, text: content }],
+    }
+  })
 }
 
 export function ChatInterface() {
@@ -76,7 +101,7 @@ export function ChatInterface() {
 
   const [input, setInput] = useState("")
 
-  // 대화 id가 바뀔 때마다 해당 id의 메시지 목록 조회
+  // 대화 id가 바뀔 때마다 해당 id의 메시지 목록 조회 → AI SDK Message[]로 변환 후 setMessages에 할당
   useEffect(() => {
     if (!conversationId) {
       setChatMessages([])
@@ -84,15 +109,9 @@ export function ChatInterface() {
     }
     fetch(`/api/conversations/${conversationId}/messages`)
       .then((res) => res.json())
-      .then((data: Message[] | { error?: string }) => {
+      .then((data: ApiMessage[] | { error?: string }) => {
         if (Array.isArray(data)) {
-          setChatMessages(
-            data.map((m) => ({
-              id: m.id,
-              role: m.role,
-              content: m.content,
-            }))
-          )
+          setChatMessages(apiMessagesToMessages(data))
         } else {
           setChatMessages([])
         }
@@ -118,7 +137,7 @@ export function ChatInterface() {
     }
   }
 
-  const displayMessages: Message[] = chatMessages.map((m) => {
+  const displayMessages: DisplayMessage[] = chatMessages.map((m) => {
     const fromParts = (m.parts ?? [])
       .filter((p): p is { type: "text"; text: string } => p.type === "text")
       .map((p) => p.text)
@@ -127,7 +146,7 @@ export function ChatInterface() {
       id: m.id,
       role: (m.role === "user" || m.role === "assistant" || m.role === "system"
         ? m.role
-        : "assistant") as Message["role"],
+        : "assistant") as DisplayMessage["role"],
       content: fromParts || (typeof m.content === "string" ? m.content : ""),
     }
   })
@@ -288,7 +307,7 @@ export function ChatInterface() {
   )
 }
 
-function MessageBubble({ message }: { message: Message }) {
+function MessageBubble({ message }: { message: DisplayMessage }) {
   const isUser = message.role === "user"
 
   return (
