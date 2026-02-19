@@ -67,6 +67,10 @@ export function ChatInterface() {
   } = useChat({
     api: "/api/chat",
     id: conversationId ?? undefined,
+    onError: (err) => {
+      console.error("[useChat] error:", err);
+      toast.error(err?.message ?? "AI 응답을 불러오는 중 오류가 발생했습니다.")
+    },
     onFinish: async (message) => {
       const currentId = conversationIdRef.current
       if (!currentId) return
@@ -207,7 +211,7 @@ export function ChatInterface() {
           <div className="flex items-center gap-2">
             <Sparkles className="size-4 text-primary" />
             <h1 className="text-sm font-semibold text-foreground">
-              React Server Components
+              AI Chatbot
             </h1>
           </div>
           <div className="hidden md:block">
@@ -241,7 +245,7 @@ export function ChatInterface() {
         <div className="flex items-center gap-2">
           <Sparkles className="size-4 text-primary" />
           <h1 className="text-sm font-semibold text-foreground">
-            React Server Components
+            AI Chatbot
           </h1>
         </div>
         <div className="hidden md:block">

@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { Plus, MessageSquare, Search, MoreHorizontal, Trash2, Pencil } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -54,13 +55,21 @@ interface ChatSidebarProps {
 
 export function ChatSidebox({ className }: ChatSidebarProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const idFromUrl = searchParams.get("id")
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [activeId, setActiveId] = useState("")
 
+  // URL의 id와 채팅 목록 선택 상태 동기화
+  useEffect(() => {
+    if (idFromUrl) setActiveId(idFromUrl)
+  }, [idFromUrl])
+
   const handleSelectConversation = (id: string) => {
-    setActiveId(id)
-    router.push(`/?id=${id}`)
+    const idStr = String(id)
+    setActiveId(idStr)
+    router.push(`/?id=${idStr}`)
   }
 
   const fetchConversations = () => {
@@ -69,7 +78,7 @@ export function ChatSidebox({ className }: ChatSidebarProps) {
       .then((data: Conversation[]) => {
         const list = Array.isArray(data) ? data : []
         setConversations(list)
-        if (list.length > 0) {
+        if (list.length > 0 && !idFromUrl) {
           setActiveId(list[0].id)
         }
         return list
@@ -138,7 +147,9 @@ export function ChatSidebox({ className }: ChatSidebarProps) {
             <MessageSquare className="size-5 text-primary-foreground" />
           </div>
           <h1 className="text-lg font-bold tracking-tight text-sidebar-foreground">
-            AI Chat
+            <Link href="/" className="hover:underline">
+              SilverStar AI Chatbot
+            </Link>
           </h1>
         </div>
       </div>
@@ -181,7 +192,7 @@ export function ChatSidebox({ className }: ChatSidebarProps) {
                   <ConversationItem
                     key={conv.id}
                     conversation={conv}
-                    isActive={activeId === conv.id}
+                    isActive={activeId === String(conv.id)}
                     onSelect={() => handleSelectConversation(conv.id)}
                     onDelete={() => handleDelete(conv.id)}
                   />
@@ -221,27 +232,32 @@ function ConversationItem({
 }) {
   return (
     <button
-      onClick={onSelect}
+      type="button"
+      onClick={() => onSelect()}
       className={cn(
-        "group flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors",
+        "group flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors",
         isActive
           ? "bg-sidebar-accent text-sidebar-accent-foreground"
           : "text-sidebar-foreground hover:bg-sidebar-accent/50"
       )}
     >
-      <span className="flex-1 truncate">{conversation.title}</span>
+      <span className="min-w-0 flex-1 truncate">{conversation.title}</span>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <span
             role="button"
             tabIndex={0}
+            aria-label="대화 메뉴"
             className={cn(
               "flex size-6 shrink-0 items-center justify-center rounded-md opacity-0 transition-opacity hover:bg-sidebar-accent group-hover:opacity-100",
               isActive && "opacity-100"
             )}
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") e.stopPropagation()
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                e.stopPropagation()
+              }
             }}
           >
             <MoreHorizontal className="size-4 text-muted-foreground" />
