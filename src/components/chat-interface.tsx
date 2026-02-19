@@ -22,6 +22,7 @@ export function ChatInterface() {
   const [conversationId, setConversationId] = useState<string | null>(idFromUrl)
   const conversationIdRef = useRef<string | null>(conversationId)
 
+  // URL의 대화 id가 바뀔 때마다 감지하여 state·ref 동기화
   useEffect(() => {
     setConversationId(idFromUrl)
   }, [idFromUrl])
@@ -75,6 +76,7 @@ export function ChatInterface() {
 
   const [input, setInput] = useState("")
 
+  // 대화 id가 바뀔 때마다 해당 id의 메시지 목록 조회
   useEffect(() => {
     if (!conversationId) {
       setChatMessages([])
@@ -84,12 +86,13 @@ export function ChatInterface() {
       .then((res) => res.json())
       .then((data: Message[] | { error?: string }) => {
         if (Array.isArray(data)) {
-          const list = data.map((m) => ({
-            id: m.id,
-            role: m.role,
-            content: m.content,
-          }))
-          setChatMessages(list)
+          setChatMessages(
+            data.map((m) => ({
+              id: m.id,
+              role: m.role,
+              content: m.content,
+            }))
+          )
         } else {
           setChatMessages([])
         }
