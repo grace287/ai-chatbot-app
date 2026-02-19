@@ -13,6 +13,9 @@ function getDateGroup(createdAt: string): string {
 }
 
 export async function GET() {
+  if (!supabase) {
+    return NextResponse.json([]);
+  }
   try {
     const { data, error } = await supabase
       .from("conversations")
@@ -38,6 +41,12 @@ export async function GET() {
 }
 
 export async function POST() {
+  if (!supabase) {
+    return NextResponse.json(
+      { error: "Supabase가 설정되지 않았습니다. .env.local에 NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY를 추가하세요." },
+      { status: 503 }
+    );
+  }
   try {
     const { data, error } = await supabase
       .from("conversations")
