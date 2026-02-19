@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Plus, MessageSquare, Search, MoreHorizontal, Trash2, Pencil } from "lucide-react"
+import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -55,8 +56,8 @@ export function ChatSidebox({ className }: ChatSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeId, setActiveId] = useState("")
 
-  useEffect(() => {
-    fetch("/api/conversations")
+  const fetchConversations = () => {
+    return fetch("/api/conversations")
       .then((res) => res.json())
       .then((data: Conversation[]) => {
         const list = Array.isArray(data) ? data : []
@@ -64,8 +65,16 @@ export function ChatSidebox({ className }: ChatSidebarProps) {
         if (list.length > 0) {
           setActiveId(list[0].id)
         }
+        return list
       })
-      .catch(() => setConversations([]))
+      .catch(() => {
+        setConversations([])
+        return []
+      })
+  }
+
+  useEffect(() => {
+    fetchConversations()
   }, [])
 
   const filtered = conversations.filter((c) =>
@@ -73,14 +82,22 @@ export function ChatSidebox({ className }: ChatSidebarProps) {
   )
   const groups = groupByDate(filtered)
 
-  const handleNewChat = () => {
-    const newConv: Conversation = {
-      id: Date.now().toString(),
-      title: "New conversation",
-      date: "today",
+  const handleNewChat = async () => {
+    try {
+      const res = await fetch("/api/conversations", { method: "POST" })
+      const data = await res.json()
+
+      if (!res.ok) {
+        toast.error("대화 생성에 실패했습니다.")
+        return
+      }
+
+      const list = await fetchConversations()
+      const newId = data?.id ?? list[0]?.id
+      if (newId) setActiveId(newId)
+    } catch {
+      toast.error("대화 생성에 실패했습니다.")
     }
-    setConversations([newConv, ...conversations])
-    setActiveId(newConv.id)
   }
 
   const handleDelete = (id: string) => {
@@ -114,7 +131,7 @@ export function ChatSidebox({ className }: ChatSidebarProps) {
       <div className="px-3 pb-3">
         <Button
           onClick={handleNewChat}
-          className="h-10 w-full gap-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
+          className="h-10 w-full gap-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-medium transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
         >
           <Plus className="size-4" />
           새 대화 시작하기

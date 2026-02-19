@@ -38,6 +38,33 @@ export async function GET() {
 }
 
 export async function POST() {
-  // TODO: 새 대화 생성
-  return NextResponse.json({ message: "Not implemented" }, { status: 501 });
+  try {
+    const { data, error } = await supabase
+      .from("conversations")
+      .insert({ title: "새 대화" })
+      .select("id, title, created_at")
+      .single();
+
+    if (error) {
+      console.error("conversations insert error:", error);
+      return NextResponse.json(
+        { error: "대화 생성에 실패했습니다." },
+        { status: 500 }
+      );
+    }
+
+    const conversation = {
+      id: String(data.id),
+      title: data.title ?? "새 대화",
+      date: data.created_at ? getDateGroup(data.created_at) : "today",
+    };
+
+    return NextResponse.json(conversation, { status: 201 });
+  } catch (e) {
+    console.error("conversations POST error:", e);
+    return NextResponse.json(
+      { error: "대화 생성에 실패했습니다." },
+      { status: 500 }
+    );
+  }
 }
