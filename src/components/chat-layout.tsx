@@ -12,7 +12,7 @@ export function ChatLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="flex h-dvh overflow-hidden">
+    <div className="flex h-dvh overflow-hidden bg-background">
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <ChatSidebox />
@@ -46,8 +46,8 @@ export function ChatLayout() {
         </Button>
       </div>
 
-      {/* Main Chat Area */}
-      <div className="flex flex-1 flex-col">
+      {/* Main Chat Area — starlight gradient */}
+      <div className="silver-main-gradient flex flex-1 flex-col">
         {/* Mobile Header */}
         <div className="flex h-12 items-center justify-between border-b border-border px-3 md:hidden">
           <div className="flex items-center">
@@ -60,8 +60,8 @@ export function ChatLayout() {
             >
               <Menu className="size-5" />
             </Button>
-            <span className="ml-2 text-sm font-semibold text-foreground">
-              AI Chat
+            <span className="ml-2 text-[15px] font-semibold text-foreground">
+              Silver Star
             </span>
           </div>
           <ThemeToggle />

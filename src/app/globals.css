@@ -116,11 +116,86 @@
   --sidebar-ring: oklch(0.552 0.016 285.938);
 }
 
+/* Silver Star — space-inspired theme tokens */
+:root {
+  --silver-star-bg-start: oklch(0.98 0.002 280);
+  --silver-star-bg-end: oklch(0.96 0.004 280);
+  --silver-star-sidebar-start: oklch(0.97 0.003 280);
+  --silver-star-sidebar-end: oklch(0.93 0.005 280);
+  --silver-star-glow: 0 0 20px oklch(0.75 0.02 280 / 0.25);
+  --silver-star-glow-strong: 0 0 28px oklch(0.7 0.03 280 / 0.35);
+}
+.dark {
+  --silver-star-bg-start: oklch(0.12 0.01 280);
+  --silver-star-bg-end: oklch(0.06 0.015 265);
+  --silver-star-sidebar-start: oklch(0.14 0.012 280);
+  --silver-star-sidebar-end: oklch(0.08 0.01 270);
+  --silver-star-glow: 0 0 24px oklch(0.65 0.08 280 / 0.4);
+  --silver-star-glow-strong: 0 0 32px oklch(0.6 0.1 280 / 0.5);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  /* Slightly larger base for readability, avoid generic 14px SaaS */
+  html {
+    font-size: 15px;
+  }
+}
+
+.silver-main-gradient {
+  background: linear-gradient(
+    165deg,
+    var(--silver-star-bg-start) 0%,
+    var(--silver-star-bg-end) 50%,
+    var(--background) 100%
+  );
+}
+.dark .silver-main-gradient {
+  background: linear-gradient(
+    165deg,
+    var(--silver-star-bg-start) 0%,
+    oklch(0.09 0.012 275) 30%,
+    var(--silver-star-bg-end) 70%,
+    var(--background) 100%
+  );
+}
+
+.silver-sidebar-gradient {
+  background: linear-gradient(
+    180deg,
+    var(--silver-star-sidebar-start) 0%,
+    var(--silver-star-sidebar-end) 100%
+  );
+}
+.dark .silver-sidebar-gradient {
+  background: linear-gradient(
+    180deg,
+    var(--silver-star-sidebar-start) 0%,
+    var(--silver-star-sidebar-end) 100%
+  );
+}
+
+@layer utilities {
+  .silver-glow-hover {
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .silver-glow-hover:hover:not(:disabled) {
+    box-shadow: var(--silver-star-glow);
+  }
+  .silver-glow-hover:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  .silver-glow-focus {
+    transition: box-shadow 0.2s ease;
+  }
+  .silver-glow-focus:focus-within {
+    box-shadow: var(--silver-star-glow);
   }
 }

@@ -203,15 +203,15 @@ export function ChatInterface() {
     }
   }
 
-  // id 쿼리가 없으면 빈 상태(안내 메시지 + 새 대화 버튼) 렌더링
+  // id 쿼리가 없으면 빈 상태(브랜딩 + 새 대화 버튼)
   if (!conversationId) {
     return (
-      <div className="flex h-full flex-1 flex-col bg-background">
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-6">
+      <div className="flex h-full flex-1 flex-col bg-transparent">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/60 px-6 backdrop-blur-sm">
           <div className="flex items-center gap-2">
-            <Sparkles className="size-4 text-primary" />
-            <h1 className="text-sm font-semibold text-foreground">
-              AI Chatbot
+            <Sparkles className="size-[1.1rem] text-primary" />
+            <h1 className="text-[15px] font-semibold tracking-tight text-foreground">
+              Silver Star
             </h1>
           </div>
           <div className="hidden md:block">
@@ -220,14 +220,19 @@ export function ChatInterface() {
         </header>
         <section
           aria-label="대화 선택 안내"
-          className="flex flex-1 flex-col items-center justify-center gap-6 px-6"
+          className="flex flex-1 flex-col items-center justify-center gap-8 px-6"
         >
-          <p className="text-center text-muted-foreground">
-            새로운 대화를 시작하거나 기존 대화를 선택해주세요
-          </p>
+          <div className="flex max-w-sm flex-col items-center gap-3 text-center">
+            <p className="text-[15px] text-muted-foreground">
+              새로운 대화를 시작하거나 기존 대화를 선택해주세요
+            </p>
+            <p className="text-[13px] tracking-wide text-muted-foreground/80">
+              Silver Star — 지식의 별빛과 함께하는 조용한 대화
+            </p>
+          </div>
           <Button
             onClick={handleStartNewChat}
-            className="gap-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
+            className="silver-glow-hover gap-2 rounded-xl bg-primary px-5 py-2.5 text-[15px] font-medium text-primary-foreground hover:bg-primary/90"
           >
             <Plus className="size-4" />
             새 대화 시작하기
@@ -239,13 +244,13 @@ export function ChatInterface() {
 
   // id가 있으면 기존 채팅 화면 렌더링
   return (
-    <div className="flex h-full flex-1 flex-col bg-background">
+    <div className="flex h-full flex-1 flex-col bg-transparent">
       {/* ── Header ── */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-6">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/60 px-6 backdrop-blur-sm">
         <div className="flex items-center gap-2">
-          <Sparkles className="size-4 text-primary" />
-          <h1 className="text-sm font-semibold text-foreground">
-            AI Chatbot
+          <Sparkles className="size-[1.1rem] text-primary" />
+          <h1 className="text-[15px] font-semibold tracking-tight text-foreground">
+            Silver Star
           </h1>
         </div>
         <div className="hidden md:block">
@@ -275,13 +280,13 @@ export function ChatInterface() {
       {/* ── Input Panel ── */}
       <section
         aria-label="메시지 입력"
-        className="shrink-0 border-t border-border bg-card px-4 py-4"
+        className="shrink-0 border-t border-border/60 bg-background/40 px-4 py-4 backdrop-blur-sm"
       >
         <form
           onSubmit={sendMessageHandler}
           className="mx-auto max-w-3xl"
         >
-          <div className="flex items-end gap-3 rounded-2xl bg-secondary p-2 ring-1 ring-border focus-within:ring-2 focus-within:ring-ring transition-shadow">
+          <div className="silver-glow-focus flex items-end gap-3 rounded-xl bg-secondary/80 p-2 ring-1 ring-border/80 focus-within:ring-2 focus-within:ring-primary/30">
             <textarea
               ref={textareaRef}
               value={input}
@@ -290,20 +295,20 @@ export function ChatInterface() {
               onKeyDown={handleKeyDown}
               placeholder="메시지를 입력하세요..."
               rows={1}
-              className="flex-1 resize-none bg-transparent px-3 py-2.5 text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none"
+              className="min-h-10 flex-1 resize-none bg-transparent px-3 py-2.5 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none"
             />
             <Button
               type="submit"
               size="icon"
               disabled={!input.trim() || chatStatus === "submitted" || chatStatus === "streaming"}
-              className="size-10 shrink-0 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 transition-opacity"
+              className="silver-glow-hover size-10 shrink-0 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30"
               aria-label="메시지 전송"
             >
               <Send className="size-4" />
             </Button>
           </div>
         </form>
-        <p className="mx-auto mt-2.5 max-w-3xl text-center text-xs text-muted-foreground">
+        <p className="mx-auto mt-2.5 max-w-3xl text-center text-[13px] text-muted-foreground/90">
           AI는 실수할 수 있습니다. 중요한 정보는 반드시 확인하세요.
         </p>
       </section>
@@ -324,23 +329,23 @@ function MessageBubble({ message }: { message: DisplayMessage }) {
       {/* Icon */}
       <div
         className={cn(
-          "flex size-9 shrink-0 items-center justify-center rounded-full",
+          "flex size-9 shrink-0 items-center justify-center rounded-lg",
           isUser
             ? "bg-primary text-primary-foreground"
-            : "bg-secondary text-foreground ring-1 ring-border"
+            : "bg-secondary/90 text-foreground ring-1 ring-border/60"
         )}
         aria-hidden="true"
       >
         {isUser ? <User className="size-4" /> : <Bot className="size-4" />}
       </div>
 
-      {/* Bubble */}
+      {/* Bubble — 덜 둥글게 (ChatGPT 스타일 완화) */}
       <div
         className={cn(
-          "max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
+          "max-w-[75%] rounded-lg px-4 py-3 text-[15px] leading-relaxed",
           isUser
-            ? "rounded-tr-sm bg-primary text-primary-foreground"
-            : "rounded-tl-sm bg-card text-card-foreground ring-1 ring-border"
+            ? "rounded-tr-md bg-primary text-primary-foreground"
+            : "rounded-tl-md bg-card/90 text-card-foreground ring-1 ring-border/50"
         )}
       >
         <MessageContent content={message.content} />
@@ -350,13 +355,10 @@ function MessageBubble({ message }: { message: DisplayMessage }) {
 }
 
 function MessageContent({ content }: { content: string }) {
-  // Simple markdown-like rendering for bold text and line breaks
   const parts = content.split("\n")
-
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1.5">
       {parts.map((line, i) => {
-        // Convert **bold** to <strong>
         const formatted = line.replace(
           /\*\*(.*?)\*\*/g,
           '<strong class="font-semibold">$1</strong>'
@@ -364,6 +366,7 @@ function MessageContent({ content }: { content: string }) {
         return (
           <p
             key={i}
+            className="text-[15px] leading-[1.6]"
             dangerouslySetInnerHTML={{ __html: formatted || "&nbsp;" }}
           />
         )

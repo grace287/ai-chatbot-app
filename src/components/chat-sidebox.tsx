@@ -136,29 +136,32 @@ export function ChatSidebox({ className }: ChatSidebarProps) {
   return (
     <aside
       className={cn(
-        "flex h-full w-[280px] flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground",
+        "silver-sidebar-gradient flex h-full w-[280px] flex-col border-r border-sidebar-border/80 text-sidebar-foreground",
         className
       )}
     >
-      {/* Header - Title */}
+      {/* Header — Knowledge archive feel */}
       <div className="px-4 pt-5 pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-primary shadow-sm">
+          <div className="flex size-9 items-center justify-center rounded-lg bg-primary/90 shadow-sm">
             <MessageSquare className="size-5 text-primary-foreground" />
           </div>
-          <h1 className="text-lg font-bold tracking-tight text-sidebar-foreground">
-            <Link href="/" className="hover:underline">
-              SilverStar AI Chatbot
+          <h1 className="text-[15px] font-bold tracking-tight text-sidebar-foreground">
+            <Link href="/" className="hover:text-primary/90 hover:underline">
+              Silver Star
             </Link>
           </h1>
         </div>
+        <p className="mt-1.5 px-0.5 text-[12px] uppercase tracking-widest text-muted-foreground/80">
+          ai chatbot
+        </p>
       </div>
 
       {/* New Chat Button */}
       <div className="px-3 pb-3">
         <Button
           onClick={handleNewChat}
-          className="h-10 w-full gap-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-medium transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98]"
+          className="silver-glow-hover h-10 w-full gap-2 rounded-lg bg-primary px-4 text-[15px] font-medium text-primary-foreground hover:bg-primary/90"
         >
           <Plus className="size-4" />
           새 대화 시작하기
@@ -174,7 +177,7 @@ export function ChatSidebox({ className }: ChatSidebarProps) {
             placeholder="대화 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 w-full rounded-lg bg-sidebar-accent pl-9 pr-3 text-sm text-sidebar-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            className="h-9 w-full rounded-lg bg-sidebar-accent/80 pl-9 pr-3 text-[15px] text-sidebar-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40"
           />
         </div>
       </div>
@@ -184,7 +187,7 @@ export function ChatSidebox({ className }: ChatSidebarProps) {
         <div className="flex flex-col gap-4 py-2">
           {groups.map((group) => (
             <div key={group.label}>
-              <p className="mb-1 px-2 text-xs font-medium text-muted-foreground">
+              <p className="mb-1 px-2 text-[12px] font-medium uppercase tracking-wider text-muted-foreground/90">
                 {group.label}
               </p>
               <div className="flex flex-col gap-0.5">
@@ -204,14 +207,14 @@ export function ChatSidebox({ className }: ChatSidebarProps) {
       </ScrollArea>
 
       {/* Footer */}
-      <div className="border-t border-sidebar-border px-3 py-3">
+      <div className="border-t border-sidebar-border/80 px-3 py-3">
         <div className="flex items-center gap-3">
-          <div className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-primary/90 text-[13px] font-bold text-primary-foreground">
             U
           </div>
           <div className="flex-1 truncate">
-            <p className="text-sm font-medium text-sidebar-foreground">User</p>
-            <p className="text-xs text-muted-foreground">Free plan</p>
+            <p className="text-[15px] font-medium text-sidebar-foreground">User</p>
+            <p className="text-[12px] text-muted-foreground/80">Free plan</p>
           </div>
         </div>
       </div>
@@ -235,7 +238,7 @@ function ConversationItem({
       type="button"
       onClick={() => onSelect()}
       className={cn(
-        "group flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors",
+        "group flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-left text-[15px] transition-colors",
         isActive
           ? "bg-sidebar-accent text-sidebar-accent-foreground"
           : "text-sidebar-foreground hover:bg-sidebar-accent/50"
