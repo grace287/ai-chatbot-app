@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Plus, MessageSquare, Search, MoreHorizontal, Trash2, Pencil } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -52,9 +53,15 @@ interface ChatSidebarProps {
 }
 
 export function ChatSidebox({ className }: ChatSidebarProps) {
+  const router = useRouter()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [activeId, setActiveId] = useState("")
+
+  const handleSelectConversation = (id: string) => {
+    setActiveId(id)
+    router.push(`/?id=${id}`)
+  }
 
   const fetchConversations = () => {
     return fetch("/api/conversations")
@@ -172,7 +179,7 @@ export function ChatSidebox({ className }: ChatSidebarProps) {
                     key={conv.id}
                     conversation={conv}
                     isActive={activeId === conv.id}
-                    onSelect={() => setActiveId(conv.id)}
+                    onSelect={() => handleSelectConversation(conv.id)}
                     onDelete={() => handleDelete(conv.id)}
                   />
                 ))}
