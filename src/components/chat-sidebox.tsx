@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Plus, MessageSquare, Search, MoreHorizontal, Trash2, Pencil } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -18,19 +18,6 @@ interface Conversation {
   date: string
   active?: boolean
 }
-
-const SAMPLE_CONVERSATIONS: Conversation[] = [
-  { id: "1", title: "React 19의 새로운 기능 정리", date: "today", active: true },
-  { id: "2", title: "Python으로 데이터 분석 시작하기", date: "today" },
-  { id: "3", title: "이메일 마케팅 전략 수립", date: "today" },
-  { id: "4", title: "Next.js App Router 마이그레이션", date: "yesterday" },
-  { id: "5", title: "영어 비즈니스 이메일 작성 도움", date: "yesterday" },
-  { id: "6", title: "TypeScript 제네릭 활용법", date: "7days" },
-  { id: "7", title: "PostgreSQL 쿼리 최적화 방법", date: "7days" },
-  { id: "8", title: "Docker 컨테이너 배포 설정", date: "7days" },
-  { id: "9", title: "2026년 기술 트렌드 요약", date: "30days" },
-  { id: "10", title: "CI/CD 파이프라인 설계 가이드", date: "30days" },
-]
 
 function groupByDate(conversations: Conversation[]) {
   const groups: { label: string; items: Conversation[] }[] = []
@@ -64,9 +51,22 @@ interface ChatSidebarProps {
 }
 
 export function ChatSidebox({ className }: ChatSidebarProps) {
-  const [conversations, setConversations] = useState(SAMPLE_CONVERSATIONS)
+  const [conversations, setConversations] = useState<Conversation[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [activeId, setActiveId] = useState("1")
+  const [activeId, setActiveId] = useState("")
+
+  useEffect(() => {
+    fetch("/api/conversations")
+      .then((res) => res.json())
+      .then((data: Conversation[]) => {
+        const list = Array.isArray(data) ? data : []
+        setConversations(list)
+        if (list.length > 0) {
+          setActiveId(list[0].id)
+        }
+      })
+      .catch(() => setConversations([]))
+  }, [])
 
   const filtered = conversations.filter((c) =>
     c.title.toLowerCase().includes(searchQuery.toLowerCase())
