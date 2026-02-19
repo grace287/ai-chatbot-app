@@ -77,6 +77,12 @@ export function ChatSidebox({ className }: ChatSidebarProps) {
     fetchConversations()
   }, [])
 
+  useEffect(() => {
+    const handler = () => fetchConversations()
+    window.addEventListener("conversations-refresh", handler)
+    return () => window.removeEventListener("conversations-refresh", handler)
+  }, [])
+
   const filtered = conversations.filter((c) =>
     c.title.toLowerCase().includes(searchQuery.toLowerCase())
   )

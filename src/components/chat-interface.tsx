@@ -58,7 +58,10 @@ export function ChatInterface() {
         return
       }
       const id = data?.id
-      if (id) router.push(`/?id=${id}`)
+      if (id) {
+        window.dispatchEvent(new CustomEvent("conversations-refresh"))
+        router.push(`/?id=${id}`)
+      }
     } catch {
       toast.error("대화 생성에 실패했습니다.")
     }
